@@ -65,7 +65,7 @@ endif
 ###########################################
 # DEPLOY ETC and ETC/DEBUG FILES
 ###########################################
-set etc_file_list = (isid Processes Systems retain sint init.d .tunnel q330.cfg q330 debug start xml)
+set etc_file_list = (isid Processes Systems retain sint init.d debug start)
 foreach fil ($etc_file_list)
 
     if ( -e ${etc_config_dir}/${fil} ) then
@@ -107,13 +107,7 @@ foreach site ($SystemsList)
 
     if ($debug) echo "Deploying ${etc_config_dir}/${fil}..."
 
-    echo $site | grep 330 > /dev/null
-    if ( $status == 0 ) then
-        set type = qdp
-    else
-        set type = ida
-    endif
-
+    set type = "ida"
     set SiteDir    = $NRTS_HOME/$site
 
     if ( ! -d $SiteDir )  then
@@ -161,11 +155,8 @@ foreach site ($SystemsList)
             mkdir -p ${isodir}
         end
 
-        if ($type == "qdp") then
-            set iso_config_file = isi330.iso.config
-        else
-            set iso_config_file = isi.iso.config
-        endif
+        set iso_config_file = isi.iso.config
+
         if ($debug) echo "Copying ISO config file ${diskloop_config_dir}/${iso_config_file} to ${SiteDir}/iso/config"
         \cp -p ${diskloop_config_dir}/${iso_config_file} ${SiteDir}/iso/config
 	
@@ -249,47 +240,33 @@ else
 endif
 fail_cron:
 
-# install user NRTS .ssh authorized_keys
-echo "Installing user nrts authorized_keys..."
-if ( -e ${config_root}/nrts/.ssh/authorized_keys) then
-    \cp -p ${config_root}/nrts/.ssh/authorized_keys $NRTS_HOME/.ssh/
-    if ($status != 0) then
-        echo "ERROR copying ${config_root}/nrts/.ssh/authorized_keys to $NRTS_HOME/.ssh/"
-        goto fail_auth_keys
-    endif
-    chmod 600 $NRTS_HOME/.ssh/authorized_keys
-else
-    echo "WARNING: file ${config_root}/nrts/.ssh/authorized_keys not found"
-endif
-fail_auth_keys:
+    # # install user NRTS .ssh authorized_keys
+    # echo "Installing user nrts authorized_keys..."
+    # if ( -e ${config_root}/nrts/.ssh/authorized_keys) then
+    #     \cp -p ${config_root}/nrts/.ssh/authorized_keys $NRTS_HOME/.ssh/
+    #     if ($status != 0) then
+    #         echo "ERROR copying ${config_root}/nrts/.ssh/authorized_keys to $NRTS_HOME/.ssh/"
+    #         goto fail_auth_keys
+    #     endif
+    #     chmod 600 $NRTS_HOME/.ssh/authorized_keys
+    # else
+    #     echo "WARNING: file ${config_root}/nrts/.ssh/authorized_keys not found"
+    # endif
+    # fail_auth_keys:
 
-# install user NRTS .ssh known_hosts files
-echo "Installing user nrts known_hosts..."
-if ( -e ${config_root}/nrts/.ssh/known_hosts) then
-    \cp -p ${config_root}/nrts/.ssh/known_hosts $NRTS_HOME/.ssh/
-    if ($status != 0) then
-        echo "ERROR copying ${config_root}/nrts/.ssh/known_hosts to $NRTS_HOME/.ssh/"
-        goto fail_known_hosts
-    endif
-    chmod 600 $NRTS_HOME/.ssh/known_hosts
-else
-    echo "WARNING: file ${config_root}/nrts/.ssh/known_hosts not found"
-endif
-fail_known_hosts:
-
-# install user TUNNEL .ssh authorized_keys
-echo "Installing user tunnel authorized_keys..."
-if ( -e ${config_root}/nrts/.tunnel/.ssh/authorized_keys) then
-    sudo \cp ${config_root}/nrts/.tunnel/.ssh/authorized_keys ~tunnel/.ssh/
-    if ($status != 0) then
-        echo "ERROR copying ${config_root}/nrts/.tunnel/.ssh/authorized_keys to ~tunnel/.ssh/"
-        goto fail_tunnel_auth_keys
-    endif
-    sudo chmod 600 ~tunnel/.ssh/authorized_keys
-else
-    echo "WARNING: file ${config_root}/nrts/.tunnel/.ssh/authorized_keys not found"
-endif
-fail_tunnel_auth_keys:
+    # # install user NRTS .ssh known_hosts files
+    # echo "Installing user nrts known_hosts..."
+    # if ( -e ${config_root}/nrts/.ssh/known_hosts) then
+    #     \cp -p ${config_root}/nrts/.ssh/known_hosts $NRTS_HOME/.ssh/
+    #     if ($status != 0) then
+    #         echo "ERROR copying ${config_root}/nrts/.ssh/known_hosts to $NRTS_HOME/.ssh/"
+    #         goto fail_known_hosts
+    #     endif
+    #     chmod 600 $NRTS_HOME/.ssh/known_hosts
+    # else
+    #     echo "WARNING: file ${config_root}/nrts/.ssh/known_hosts not found"
+    # endif
+    # fail_known_hosts:
 
 
 success:
