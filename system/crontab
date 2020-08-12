@@ -1,0 +1,19 @@
+########### Refresh the telemetry status page once a minute
+########### assumes /ida/web/Telemetry/
+## * * * * * /usr/nrts/scripts/UpdateNrtsLatencyPages
+#
+# Flush the nrtslog
+59 * * * * /usr/nrts/scripts/nrts_flushlog
+#
+########### Move newly closed tee files to the DCC
+########### assumes /ida/{stage,archive/raw,archive/ms}
+## */10 * * * * /usr/nrts/scripts/ArchiveTeeFiles /ida/archive/raw /ida/archive/ms /ida/stage
+#
+# MOVED TO IDADCC: update 24-hour helicorder plots
+#
+########### Generate new wfdiscs
+ 8,18,28,38,48,58 * * * * /usr/nrts/scripts/isiGenerateWfdiscFiles /usr/nrts/wfdiscs /ida/irta
+#
+# Save IDAHUB Persona file
+59 23 * * * /usr/nrts/scripts/bkpersona /usr/nrts/tmp
+

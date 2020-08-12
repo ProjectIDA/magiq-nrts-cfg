@@ -1,0 +1,300 @@
+#!/bin/tcsh
+#
+# assumes:
+#   interractive execution by user nrts with $NRTS_HOME set
+#   execution from script directory
+
+set myname = nrts-config
+
+if (! $?NRTS_HOME) then
+    echo "ERROR: Evnironment variable NRTS_HOME must be set."
+    echo "Quitting."
+    exit 1
+endif
+
+# General setup
+set debug = 0
+set teedirs = 0
+set isodirs = 0
+set wfdiscdir = 0
+set systemd_install = 0
+set systemd_enable = 0
+
+
+# process cmdline options
+foreach opt ($argv)
+    if ( "$opt" == "-d" ) then
+        set debug = 1
+    else if ( "$opt" == "teedirs" ) then
+        set teedirs = 1
+    else if ( "$opt" == "isodirs" ) then
+        set isodirs = 1
+    else if ( "$opt" == "wfdiscdir" ) then
+        set wfdiscdir = 1
+    else if ( "$opt" == "systemd-enable" ) then
+        set systemd_enable = 1
+        set systemd_install = 1
+    else if ( "$opt" == "systemd-install" ) then
+        set systemd_install = 1
+    endif
+end
+
+
+# save starting pwd
+# and obtain absolute path of config script
+set config_root = `pwd`
+if ($debug) echo "Config Root: $config_root"
+
+set etc_config_dir = ${config_root}/nrts/etc
+if ($debug) echo "Etc Config Dir: $etc_config_dir"
+
+set diskloop_config_dir = ${config_root}/nrts/etc/config
+if ($debug) echo "Disk Loop Config Dir: $diskloop_config_dir"
+
+set system_config_dir = ${config_root}/system
+if ($debug) echo "System Config Dir: $system_config_dir"
+
+###########################################
+# create $NRTS_HOME/etc exists
+###########################################
+if (! -d $NRTS_HOME/etc) then
+    if ($debug) echo "Creating $NRTS_HOME/etc..."
+    mkdir -p $NRTS_HOME/etc
+endif
+
+###########################################
+# DEPLOY ETC and ETC/DEBUG FILES
+###########################################
+set etc_file_list = (isid Processes Systems retain sint init.d .tunnel q330.cfg q330 debug start xml)
+foreach fil ($etc_file_list)
+
+    if ( -e ${etc_config_dir}/${fil} ) then
+        if ($debug) echo "Deploying ${etc_config_dir}/${fil}..."
+        \cp -r ${etc_config_dir}/${fil} $NRTS_HOME/etc/
+        if ( $status != 0 ) echo "Warning: error copying ${etc_config_dir}/${fil} to $NRTS_HOME/etc/ "
+    else
+        echo "INFO: ${etc_config_dir}/${fil} not found. Skipping"
+    endif
+
+end
+
+###########################################
+# CREATE wdiscs DIR IF REQUESTED
+###########################################
+if ($wfdiscdir) then
+    if ($debug) echo "Creating wfdisc dir..."
+    mkdir -p $NRTS_HOME/wfdiscs
+endif
+
+
+###########################################
+# PROCESS DISK LOOPS
+###########################################
+set SystemsFile = ${etc_config_dir}/Systems
+if ($debug) echo "Building diskloops from ${etc_config_dir}/Systems file..."
+if (-e $SystemsFile && -e $NRTS_HOME/bin/stripcat) then
+    set SystemsList = `stripcat $SystemsFile`
+    @ SystemsCount = $#SystemsList
+    set DefaultSite = $SystemsList[1]
+else
+    echo "ERROR processing $SystemsFile. Quitting."
+    exit 1
+endif
+
+set dl_files = (bwd hdr dat sys isi)
+# Loop for each site
+foreach site ($SystemsList)
+
+    if ($debug) echo "Deploying ${etc_config_dir}/${fil}..."
+
+    echo $site | grep 330 > /dev/null
+    if ( $status == 0 ) then
+        set type = qdp
+    else
+        set type = ida
+    endif
+
+    set SiteDir    = $NRTS_HOME/$site
+
+    if ( ! -d $SiteDir )  then
+        if ($debug) echo "Making disk loop dir ${SiteDir}..."
+        mkdir $SiteDir
+        chmod 2755 $SiteDir
+    endif
+
+    if ( -e ${diskloop_config_dir}/cnf.${site} ) then
+        if ($debug) echo "Copying disk loop cnf file ${diskloop_config_dir}/cnf.${site}..."
+        \cp -p ${diskloop_config_dir}/cnf.${site} ${SiteDir}/cnf
+    endif
+
+    # get rid of any existing NRTS DL files
+    foreach fil ($dl_files)
+        rm -rf ${SiteDir}/${fil}
+    end
+
+    isimkdl type=$type $site >& /dev/null
+    if ($status != 0) then
+        echo "ERROR: Can not create ISI disk loop for ${site}, skipping."
+    endif
+
+    # make NRTS DL, if appropriate
+    if ($type == ida && -e $SiteDir/cnf) then
+
+        nrts_mkdl $site >& /dev/null
+        if ($status != 0) then
+            echo "ERROR: unable to create '$site' NRTS disk loop, skipping"
+        endif
+    endif
+
+    if ($teedirs) then
+        if ($debug) echo "Creating tee dir ${SiteDir}/tee..."
+        mkdir -p $SiteDir/tee >& /dev/null
+    else if (-d ${SiteDir}/tee) then
+	if ($debug) echo "Removing tee dir ${SiteDir}/tee..."
+        rm -rf ${SiteDir}/tee
+    endif
+
+    if ($isodirs) then
+	set iso_dir_list = ($SiteDir/iso/stage ${SiteDir}/iso/done ${SiteDir}/iso/done/images ${SiteDir}/iso/done/gziped)
+	foreach isodir ($iso_dir_list)
+            if ($debug) echo "Creating iso dir: $isodir"
+            mkdir -p ${isodir}
+        end
+
+        if ($type == "qdp") then
+            set iso_config_file = isi330.iso.config
+        else
+            set iso_config_file = isi.iso.config
+        endif
+        if ($debug) echo "Copying ISO config file ${diskloop_config_dir}/${iso_config_file} to ${SiteDir}/iso/config"
+        \cp -p ${diskloop_config_dir}/${iso_config_file} ${SiteDir}/iso/config
+	
+    else if (-d ${SiteDir}/iso) then
+	if ($debug) echo "Removing iso dir ${SiteDir}/iso..."
+        rm -rf ${SiteDir}/iso
+    endif
+
+end
+
+
+##############################
+# SYSTEM CONFIGURATION UPDATES
+##############################
+
+# Install SYSTEMD Service File, if requested
+if ($systemd_install) then
+    if ($debug) echo "Installing systemd service file..."
+    if ( -e ${system_config_dir}/nrts.service) then 
+        sudo \cp ${system_config_dir}/nrts.service /etc/systemd/system/
+        if ($status != 0) then
+            echo "ERROR copying ${system_config_dir}/nrts.service to /etc/systemd/system/"
+            goto fail_systemd
+        else
+            sudo chmod 644 /etc/systemd/system/nrts.service
+        endif
+    else
+        echo "ERROR: file ${system_config_dir}/nrts.service not found"    
+        goto fail_systemd
+    endif
+
+    if ($systemd_enable) then
+        sudo systemctl enable nrts.service
+        if ($status != 0) then
+            echo "ERROR enabling nrts.service"
+            goto fail_systemd
+        endif
+    endif
+endif
+fail_systemd:
+
+# install MOTD
+echo "Installing MOTD..."
+if ( -e ${system_config_dir}/motd ) then
+    sudo \cp ${system_config_dir}/motd /etc/
+    if ($status != 0) then
+        echo "ERROR copying ${system_config_dir}/motd to /etc/"
+        goto fail_motd
+    endif
+else
+    echo "WARNING: file ${system_config_dir}/motd not found"
+endif
+fail_motd:
+
+# install hosts file
+echo "Installing HOSTS file..."
+if ( -e ${system_config_dir}/hosts ) then
+    sudo \cp ${system_config_dir}/hosts /etc/
+    if ($status != 0) then
+        echo "ERROR copying ${system_config_dir}/hosts to /etc/"
+        goto fail_hosts
+    endif
+else
+    echo "WARNING: file ${system_config_dir}/hosts not found"
+endif
+fail_hosts:
+
+
+# install crontab file
+echo "Installing NRTS CRONTAB file..."
+if ( -e ${system_config_dir}/crontab ) then
+    sudo \cp ${system_config_dir}/crontab /var/spool/cron/nrts
+    if ($status != 0) then
+        echo "ERROR copying ${system_config_dir}/crontab to /var/spool/cron/nrts"
+        goto fail_cron
+    endif
+    sudo chown nrts:nrts /var/spool/cron/nrts
+    sudo chmod 600 /var/spool/cron/nrts
+else
+    echo "WARNING: file ${system_config_dir}/crontab not found"
+endif
+fail_cron:
+
+# install user NRTS .ssh authorized_keys
+echo "Installing user nrts authorized_keys..."
+if ( -e ${config_root}/nrts/.ssh/authorized_keys) then
+    \cp -p ${config_root}/nrts/.ssh/authorized_keys $NRTS_HOME/.ssh/
+    if ($status != 0) then
+        echo "ERROR copying ${config_root}/nrts/.ssh/authorized_keys to $NRTS_HOME/.ssh/"
+        goto fail_auth_keys
+    endif
+    chmod 600 $NRTS_HOME/.ssh/authorized_keys
+else
+    echo "WARNING: file ${config_root}/nrts/.ssh/authorized_keys not found"
+endif
+fail_auth_keys:
+
+# install user NRTS .ssh known_hosts files
+echo "Installing user nrts known_hosts..."
+if ( -e ${config_root}/nrts/.ssh/known_hosts) then
+    \cp -p ${config_root}/nrts/.ssh/known_hosts $NRTS_HOME/.ssh/
+    if ($status != 0) then
+        echo "ERROR copying ${config_root}/nrts/.ssh/known_hosts to $NRTS_HOME/.ssh/"
+        goto fail_known_hosts
+    endif
+    chmod 600 $NRTS_HOME/.ssh/known_hosts
+else
+    echo "WARNING: file ${config_root}/nrts/.ssh/known_hosts not found"
+endif
+fail_known_hosts:
+
+# install user TUNNEL .ssh authorized_keys
+echo "Installing user tunnel authorized_keys..."
+if ( -e ${config_root}/nrts/.tunnel/.ssh/authorized_keys) then
+    sudo \cp ${config_root}/nrts/.tunnel/.ssh/authorized_keys ~tunnel/.ssh/
+    if ($status != 0) then
+        echo "ERROR copying ${config_root}/nrts/.tunnel/.ssh/authorized_keys to ~tunnel/.ssh/"
+        goto fail_tunnel_auth_keys
+    endif
+    sudo chmod 600 ~tunnel/.ssh/authorized_keys
+else
+    echo "WARNING: file ${config_root}/nrts/.tunnel/.ssh/authorized_keys not found"
+endif
+fail_tunnel_auth_keys:
+
+
+success:
+echo "Success! You must rehash before you try to run NRTS software."
+exit 0
+
+failure:
+exit 1

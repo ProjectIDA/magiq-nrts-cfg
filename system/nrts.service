@@ -1,0 +1,17 @@
+[Unit]
+Description=IDA NEAR REAL TIME SYSTEM (NRTS) Service
+After=network.target
+
+[Service]
+Type=simple
+User=nrts
+Group=nrts
+RemainAfterExit=True
+
+# NRTS HOME DIR PATH IS SYSTEM/INSTALLATION SPECIFIC
+# MODIFY ExecStart AND ExecStop ACCORDINGLY
+ExecStart=/usr/nrts/etc/init.d/nrts start
+ExecStop=/usr/nrts/etc/init.d/nrts stop
+
+[Install]
+WantedBy=multi-user.target

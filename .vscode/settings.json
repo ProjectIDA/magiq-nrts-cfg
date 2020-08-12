@@ -1,0 +1,7 @@
+{
+    "shellcheck.ignorePatterns": {
+
+        "**/*.zsh": true,
+        "**/*.tcsh": true
+    }
+}

@@ -1,0 +1,13 @@
+# iBFO NRTS disk loop
+
+ida10       # system type
+1024        # raw packet length
+ibfo        # station name
+
+# 40 Hz streams
+# 100800 = 7 days of user data
+#   3600 = 6 hours of hidden data
+# 104400 = disk buffer length
+
+   bhz00 104400 3600
+#   bh100 104400 3600
