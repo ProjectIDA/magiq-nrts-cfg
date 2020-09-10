@@ -1,0 +1,18 @@
+# mgqi1 NRTS disk loop
+
+ida10       # system type
+1024       # raw packet length
+mgqi1       # station name
+
+
+
+p1s32  52200    1800
+p2s32  52200    1800
+
+a4s    26100    1800
+a5s    26100    1800
+
+x1     26100    1800
+x2     26100    1800
+y1     26100    1800
+y2     26100    1800
