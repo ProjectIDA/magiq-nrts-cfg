@@ -1,11 +1,10 @@
 # Flush the nrtslog
 59 * * * * /usr/nrts/scripts/nrts_flushlog
 #
-########### Move newly closed tee files to the Archive
-########### assumes /ida/{stage,archive/raw,archive/ms}
-## */10 * * * * /usr/nrts/scripts/ArchiveTeeFiles /var/archive/raw /var/archive/ms /var/stage
 #
-# MOVED TO IDADCC: update 24-hour helicorder plots
+# Archive TEE files to IDA10 RAW (gzipped), Miniseed and CSS archives. Set NETWORK to 'X0'.
+*/10 * * * * /usr/nrts/scripts/ArchiveTeeFiles /usr/nrts/archive/raw /usr/nrts/archive/ms /usr/nrts/archive/css X0
+#
 #
 ########### Generate new wfdiscs
  8,18,28,38,48,58 * * * * /usr/nrts/scripts/isiGenerateWfdiscFiles /usr/nrts/wfdiscs /ida/irta
