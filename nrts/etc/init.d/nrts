@@ -6,7 +6,7 @@
 case $1 in
 start)
 
-    NRTSRC=~nrts/etc/start/boot.tcsh
+    NRTSRC=~nrts/etc/start/boot
     if [ -f ${NRTSRC} ]; then
         echo "Starting NRTS"
         csh ${NRTSRC} > /dev/null &
