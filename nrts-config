@@ -87,6 +87,15 @@ if ($wfdiscdir) then
 endif
 
 
+
+###########################################
+# CREATE Local Archive dirs
+###########################################
+mkdir -p $NRTS_HOME/archive/raw
+mkdir -p $NRTS_HOME/archive/ms
+mkdir -p $NRTS_HOME/archive/css
+
+
 ###########################################
 # PROCESS DISK LOOPS
 ###########################################
@@ -228,13 +237,17 @@ fail_hosts:
 # install crontab file
 echo "Installing NRTS CRONTAB file..."
 if ( -e ${system_config_dir}/crontab ) then
-    sudo \cp ${system_config_dir}/crontab /var/spool/cron/nrts
+	#   sudo \cp ${system_config_dir}/crontab /var/spool/cron/nrts
+	#   if ($status != 0) then
+	#       echo "ERROR copying ${system_config_dir}/crontab to /var/spool/cron/nrts"
+	#       goto fail_cron
+	#   endif
+	#   sudo chown nrts:nrts /var/spool/cron/nrts
+	#   sudo chmod 600 /var/spool/cron/nrts
+    crontab ${system_config_dir}/crontab
     if ($status != 0) then
-        echo "ERROR copying ${system_config_dir}/crontab to /var/spool/cron/nrts"
-        goto fail_cron
+	echo "ERROR installing crontab file ${system_config_dir}/crontab"
     endif
-    sudo chown nrts:nrts /var/spool/cron/nrts
-    sudo chmod 600 /var/spool/cron/nrts
 else
     echo "WARNING: file ${system_config_dir}/crontab not found"
 endif
