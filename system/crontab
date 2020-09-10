@@ -1,13 +1,9 @@
-########### Refresh the telemetry status page once a minute
-########### assumes /ida/web/Telemetry/
-## * * * * * /usr/nrts/scripts/UpdateNrtsLatencyPages
-#
 # Flush the nrtslog
 59 * * * * /usr/nrts/scripts/nrts_flushlog
 #
-########### Move newly closed tee files to the DCC
+########### Move newly closed tee files to the Archive
 ########### assumes /ida/{stage,archive/raw,archive/ms}
-## */10 * * * * /usr/nrts/scripts/ArchiveTeeFiles /ida/archive/raw /ida/archive/ms /ida/stage
+## */10 * * * * /usr/nrts/scripts/ArchiveTeeFiles /var/archive/raw /var/archive/ms /var/stage
 #
 # MOVED TO IDADCC: update 24-hour helicorder plots
 #
