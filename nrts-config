@@ -70,7 +70,7 @@ foreach fil ($etc_file_list)
 
     if ( -e ${etc_config_dir}/${fil} ) then
         if ($debug) echo "Deploying ${etc_config_dir}/${fil}..."
-        \cp -r ${etc_config_dir}/${fil} $NRTS_HOME/etc/
+        \cp -rpf ${etc_config_dir}/${fil} $NRTS_HOME/etc/
         if ( $status != 0 ) echo "Warning: error copying ${etc_config_dir}/${fil} to $NRTS_HOME/etc/ "
     else
         echo "INFO: ${etc_config_dir}/${fil} not found. Skipping"
