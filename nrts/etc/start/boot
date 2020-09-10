@@ -52,8 +52,8 @@ foreach server (isid)
     $NRTS_HOME/etc/init.d/$server bounce
 end
 
-isidl isi=shub   coco -bd  -noseedlink
-isidl isi=shub   ibfo -bd  -noseedlink
+#isidl isi=shub   coco -bd  -noseedlink
+#isidl isi=shub   ibfo -bd  -noseedlink
 isidl isi=172.16.152.32   mgqi1 -bd  -noseedlink
 
 exit 0

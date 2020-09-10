@@ -1,9 +1,5 @@
-127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4 nrts-magiq
-::1         localhost localhost.localdomain localhost6 localhost6.localdomain6 nrts-magiq
-
-#
-132.239.4.71   idahub idahub.ucsd.edu
-132.239.4.70   shub
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4 
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
 
 # Remote (non-UCSD.EDU) sites and gateways which can (nominally)
 # be reached directly and which have assigned DNS names.  They

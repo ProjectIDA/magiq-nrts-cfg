@@ -220,21 +220,21 @@ else
 endif
 fail_motd:
 
-# install hosts file
-echo "Installing HOSTS file..."
-if ( -e ${system_config_dir}/hosts ) then
-    sudo \cp ${system_config_dir}/hosts /etc/
-    if ($status != 0) then
-        echo "ERROR copying ${system_config_dir}/hosts to /etc/"
-        goto fail_hosts
-    endif
-else
-    echo "WARNING: file ${system_config_dir}/hosts not found"
-endif
-fail_hosts:
+## install hosts file
+#echo "Installing HOSTS file..."
+#if ( -e ${system_config_dir}/hosts ) then
+#    sudo \cp ${system_config_dir}/hosts /etc/
+#    if ($status != 0) then
+#	echo "ERROR copying ${system_config_dir}/hosts to /etc/"
+#	goto fail_hosts
+#    endif
+#else
+#    echo "WARNING: file ${system_config_dir}/hosts not found"
+#endif
+#fail_hosts:
 
 
-# install crontab file
+	# install crontab file
 echo "Installing NRTS CRONTAB file..."
 if ( -e ${system_config_dir}/crontab ) then
 	#   sudo \cp ${system_config_dir}/crontab /var/spool/cron/nrts
